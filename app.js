@@ -3,6 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const _ = require("lodash");
+const md5 = require("md5");
 
 const mongoose = require("mongoose");
 
@@ -30,10 +31,6 @@ const usersSchema = new mongoose.Schema({
     }
 });
 
-const secret = process.env.SECRET;
-
-usersSchema.plugin(encrypt, {secret: secret, encryptedFields: ["password"]});
-
 const User = mongoose.model("User", usersSchema);
 
 
@@ -51,9 +48,8 @@ app.route("/login")
 
         await User.findOne({email: req.body.username})
             .then((foundUser) => {
-                console.log("here");
                 if(foundUser) {
-                    if(foundUser.password === req.body.password) {
+                    if(foundUser.password === md5(req.body.password)) {
                         res.render("secrets");
                     } else {
                         res.send("Invaild password");
@@ -77,7 +73,7 @@ app.route("/register")
 
         const newUser = new User({
             email: req.body.username,
-            password: req.body.password
+            password: md5(req.body.password)
         });
 
         newUser.save()
